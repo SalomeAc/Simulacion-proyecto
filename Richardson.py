@@ -2,6 +2,7 @@ from NewtonRaphson import *
 
 import numpy as np
 import scipy.sparse as sp
+import pandas as pd
 
 def richardson_solver(A, b, x0=None, max_iter=10000, tol=1e-6):
     """
@@ -40,6 +41,7 @@ V[0, ny-1] = 0.0       # Esquina superior izquierda a 0
 V[:, 0] = 0.0          # Frontera inferior (fila 0) a 0
 V[:, ny-1] = 0.0       # Frontera superior (última fila) a 0
 V[-1, :] = 0.0         # Frontera derecha a 0
+
 F_val_test = compute_F(V.flatten(), nx, ny, v_x, v_y)
 J_test = Jacobiano(V.flatten(), nx, ny, v_x, v_y)
 
@@ -49,22 +51,4 @@ delta_V_test = richardson_solver(J_test, -F_val_test, x0=np.zeros_like(F_val_tes
 # Aplicar la corrección como se haría en Newton-Raphson
 V_corrected = V.flatten() + delta_V_test
 
-import matplotlib.pyplot as plt
-from matplotlib import cm
-
-# --- 1. Reconstruir la matriz 2‑D ---
-V_corr_2D = V_corrected.reshape((nx, ny))
-
-# --- 2. Dibujar mapa de calor ---
-plt.figure(figsize=(15, 5))
-plt.imshow(V_corr_2D.T,        # traspuesta para mismo sentido X‑Y que antes
-           cmap=cm.hot,
-           origin='lower',
-           aspect='auto',
-           interpolation='bilinear')
-plt.colorbar(label='Potencial')
-plt.title('Mapa de calor tras 1 paso de NR (Jacobi interno)')
-plt.xlabel('Dirección X')
-plt.ylabel('Dirección Y')
-plt.show()
 

@@ -157,3 +157,17 @@ plt.ylabel('Dirección Y')
 plt.savefig('mapa_calor_potencial.png', dpi=300, bbox_inches='tight')
 print("Mapa de calor guardado como 'mapa_calor_potencial.png'")
 plt.show()
+
+# VERIFICACIÓN DE SIMETRIÍA DEL JACOBIANO
+
+# Extrae un bloque 200×200 del Jacobiano
+block_size = 200
+J_block = J[:block_size, :block_size].todense()
+
+# Muestra en pantalla
+print(np.round(J_block, 3))
+
+# verlo en Excel:
+pd.DataFrame(np.round(J_block, 6)).to_excel(
+    "jacobiano_bloque_200x200.xlsx", index=False, header=False)
+print("Bloque 200×200 guardado en jacobiano_bloque_200x200.xlsx")
