@@ -33,10 +33,10 @@ def compute_F(V_flat, nx, ny, v_x, v_y):
         for j in range(1, ny-1):
 
             # Aquí se hace no lineal
-            adv_x = (1/2)*v_x*V[i,j]*(V[i+1,j] - V[i-1,j])
-            adv_y = (1/2)*v_y*V[i,j]*(V[i,j+1] - V[i,j-1])
-            laplaciano = V[i+1,j] + V[i-1,j] + V[i,j+1] + V[i,j-1]
-            F_val[i,j] = V[i,j] - 0.25 * (laplaciano - adv_x - adv_y)
+            termino1 = V[i+1,j] + V[i-1,j] + V[i,j+1] + V[i,j-1]
+            termino2 = (1/2)*v_x*V[i,j]*(V[i+1,j] - V[i-1,j])
+            termino3 = (1/2)*v_y*V[i,j]*(V[i,j+1] - V[i,j-1])
+            F_val[i,j] = V[i,j] - 0.25 * (termino1 - termino2 - termino3)
     
     # Aplicar condiciones de frontera 
     F_val[0, :] = V[0, :] - 1.0

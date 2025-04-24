@@ -1,46 +1,42 @@
+import numpy as np
+import scipy.sparse as sp
 from NewtonRaphson import *
 
-max_iter = 10000
+def jacobi_solver(A, b, x0=None, max_iter=1000, tol=1e-6):
+    n = A.shape[0]
+    x = np.zeros(n) if x0 is None else x0.copy()
 
-# Método de Jacobi
-converged = False
-V_new = np.copy(V)
+    # Verificar que la diagonal no tenga ceros para evitar divisiones por cero
+    D = A.diagonal()
+    if np.any(D == 0):
+        raise ValueError("La matriz tiene ceros en la diagonal, Jacobi no es aplicable directamente.")
 
-for k in range(max_iter):
-    for i in range(1, nx - 1):
-        for j in range(1, ny - 1):
-            laplaciano = V[i+1, j] + V[i-1, j] + V[i, j+1] + V[i, j-1]
-            adv_x = 0.5 * v_x * (V[i+1, j] - V[i-1, j])
-            adv_y = 0.5 * v_y * (V[i, j+1] - V[i, j-1])
-            V_new[i, j] = 0.25 * (laplaciano - adv_x - adv_y)
+    D_inv = 1.0 / D
 
-    # Condiciones de frontera (reaplicar en cada paso)
-    V_new[0, :] = 1.0
-    V_new[0, 0] = 0.0
-    V_new[0, ny-1] = 0.0
-    V_new[:, 0] = 0.0
-    V_new[:, ny-1] = 0.0
-    V_new[-1, :] = 0.0
+    print("Norma del residuo inicial:", np.linalg.norm(b - A @ x, np.inf))
 
-    # Verificación de convergencia
-    delta = np.max(np.abs(V_new - V))
-    print(f"Iteración {k}: Cambio máximo = {delta:.6e}")
-    if delta < tolerance:
-        print(f"¡Jacobi convergió en {k} iteraciones!")
-        converged = True
-        break
+    for k in range(max_iter):
+        r = b - A @ x
+        delta_x = D_inv * r
+        x += delta_x
 
-    V[:] = V_new[:]
+        if np.linalg.norm(delta_x, np.inf) < tol:
+            print(f"Jacobi convergió en {k} iteraciones internas.")
+            break
 
-if not converged:
-    print("Jacobi no alcanzó la convergencia")
+    r_norm = np.linalg.norm(b - A @ x, np.inf)
+    print("Residuo final Jacobi:", r_norm)
 
-# Mostrar el resultado
-plt.figure(figsize=(15, 5))
-plt.imshow(V.T, cmap=cm.hot, origin='lower', aspect='auto')
-plt.colorbar(label='Potencial')
-plt.title(f'Mapa de Calor del Potencial (Jacobi, v_x={v_x}, v_y={v_y})')
-plt.xlabel('Dirección X')
-plt.ylabel('Dirección Y')
-plt.savefig("jacobi_mapa_calor.png", dpi=300, bbox_inches='tight')
-plt.show()
+    return x
+
+# Prueba del método de Jacobi sobre un sistema nuevo (como parte del proceso de Newton-Raphson)
+V_test = np.full((nx, ny), 0.3)
+F_val_test = compute_F(V_test.flatten(), nx, ny, v_x, v_y)
+J_test = Jacobiano(V_test.flatten(), nx, ny, v_x, v_y)
+
+print("Norma inicial:", np.linalg.norm(J_test @ np.zeros_like(F_val_test) + F_val_test, np.inf))
+delta_V_test = jacobi_solver(J_test, -F_val_test, x0=np.zeros_like(F_val_test), max_iter=1000, tol=1e-6)
+
+# Aplicar la corrección como se haría en Newton-Raphson
+V_corrected = V_test.flatten() + delta_V_test
+
