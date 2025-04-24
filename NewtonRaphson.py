@@ -28,12 +28,15 @@ V[-1, :] = 0.0         # Frontera derecha a 0
 def compute_F(V_flat, nx, ny, v_x, v_y):
     V = V_flat.reshape((nx, ny))
     F_val = np.zeros_like(V)
-    
+
     for i in range(1, nx-1):
         for j in range(1, ny-1):
-            F_val[i,j] = V[i,j] - (1/4)*(V[i+1,j] + V[i-1,j] + V[i,j+1] + V[i,j-1] - 
-                         (1/2)*v_x*(V[i+1,j] - V[i-1,j]) - 
-                         (1/2)*v_y*(V[i,j+1] - V[i,j-1]))
+
+            # Aquí se hace no lineal
+            adv_x = (1/2)*v_x*V[i,j]*(V[i+1,j] - V[i-1,j])
+            adv_y = (1/2)*v_y*V[i,j]*(V[i,j+1] - V[i,j-1])
+            laplaciano = V[i+1,j] + V[i-1,j] + V[i,j+1] + V[i,j-1]
+            F_val[i,j] = V[i,j] - 0.25 * (laplaciano - adv_x - adv_y)
     
     # Aplicar condiciones de frontera 
     F_val[0, :] = V[0, :] - 1.0
@@ -46,30 +49,25 @@ def compute_F(V_flat, nx, ny, v_x, v_y):
     return F_val.flatten()
 
 # Función para calcular el Jacobiano analíticamente
-def Jacobiano(V_flat, nx, ny, v_x, v_y):
+def Jacobiano(V_flat, nx, ny, v_x, v_y, h=1.0):
     N = nx * ny
     J = lil_matrix((N, N))
     V = V_flat.reshape((nx, ny))
-    
-    # Para los puntos internos, se calcula el jacobiano  para cada derivada p:
+
     for i in range(1, nx-1):
         for j in range(1, ny-1):
-            idx = i*ny + j  # Índice lineal para el punto (i,j)
-            
-            # Derivada respecto a V[i,j]: ∂F/∂V[i,j] = 1
-            J[idx, idx] = 1
-            
-            # Derivada respecto a V[i+1,j]: ∂F/∂V[i+1,j] = -1/4 + (1/8)*v_x
-            J[idx, (i+1)*ny + j] = -1/4 + (1/8)*v_x
-            
-            # Derivada respecto a V[i-1,j]: ∂F/∂V[i-1,j] = -1/4 - (1/8)*v_x
-            J[idx, (i-1)*ny + j] = -1/4 - (1/8)*v_x
-            
-            # Derivada respecto a V[i,j+1]: ∂F/∂V[i,j+1]
-            J[idx, i*ny + (j+1)] = -1/4 + (1/8)*v_y
-            
-            # Derivada respecto a V[i,j-1]: ∂F/∂V[i,j-1]
-            J[idx, i*ny + (j-1)] = -1/4 - (1/8)*v_y
+            idx = i*ny + j
+
+            # Término principal: ∂F/∂V[i,j]
+            d_adv_x = (1/2)*v_x*(V[i+1,j] - V[i-1,j])
+            d_adv_y = (1/2)*v_y*(V[i,j+1] - V[i,j-1])
+            J[idx, idx] = 1 + 0.25 * (d_adv_x + d_adv_y)
+
+            # Derivadas respecto a vecinos
+            J[idx, (i+1)*ny + j] = -0.25 * (1 - (1/2)*v_x*V[i,j])
+            J[idx, (i-1)*ny + j] = -0.25 * (1 + (1/2)*v_x*V[i,j])
+            J[idx, i*ny + (j+1)] = -0.25 * (1 - (1/2)*v_y*V[i,j])
+            J[idx, i*ny + (j-1)] = -0.25 * (1 + (1/2)*v_y*V[i,j])
     
     # Fronteras con valores fijos (Dirichlet): ∂F/∂V = 1 para el mismo punto, 0 para otros
     # Frontera izquierda
