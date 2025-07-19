@@ -28,7 +28,7 @@ V[-1, :] = 0.0         # Frontera derecha a 0
 def compute_F(V_flat, nx, ny, v_x, v_y):
     V = V_flat.reshape((nx, ny))
     F_val = np.zeros_like(V)
-
+    
     for i in range(1, nx-1):
         for j in range(1, ny-1):
 
@@ -37,7 +37,7 @@ def compute_F(V_flat, nx, ny, v_x, v_y):
             termino2 = (1/2)*v_x*V[i,j]*(V[i+1,j] - V[i-1,j])
             termino3 = (1/2)*v_y*V[i,j]*(V[i,j+1] - V[i,j-1])
             F_val[i,j] = V[i,j] - 0.25 * (termino1 - termino2 - termino3)
-    
+   
     # Aplicar condiciones de frontera 
     F_val[0, :] = V[0, :] - 1.0
     F_val[0, 0] = V[0, 0]
@@ -48,7 +48,7 @@ def compute_F(V_flat, nx, ny, v_x, v_y):
     
     return F_val.flatten()
 
-# Función para calcular el Jacobiano analíticamente
+# Función para calcular el Jacobiano 
 def Jacobiano(V_flat, nx, ny, v_x, v_y, h=1.0):
     N = nx * ny
     J = lil_matrix((N, N))
@@ -68,7 +68,7 @@ def Jacobiano(V_flat, nx, ny, v_x, v_y, h=1.0):
             J[idx, (i-1)*ny + j] = -0.25 * (1 + (1/2)*v_x*V[i,j])
             J[idx, i*ny + (j+1)] = -0.25 * (1 - (1/2)*v_y*V[i,j])
             J[idx, i*ny + (j-1)] = -0.25 * (1 + (1/2)*v_y*V[i,j])
-    
+     
     # Fronteras con valores fijos (Dirichlet): ∂F/∂V = 1 para el mismo punto, 0 para otros
     # Frontera izquierda
     for j in range(ny):
@@ -129,20 +129,25 @@ V = V_flat.reshape((nx, ny))
 def save_to_excel(V):
     # Transponer la matriz para que coincida con la orientación del gráfico
     V_transposed = V.T
-    
-    # Crear un DataFrame de pandas
-    df_V = pd.DataFrame(V_transposed)
-    
-    # También guardamos una matriz de ceros para vy como en el código original
+
+    # Crear DataFrame con columnas como posiciones en x (0 a nx-1)
+    columnas = [f"x={i}" for i in range(nx)]
+    filas = [f"y={j}" for j in range(ny)]
+
+    # Crear el DataFrame con etiquetas en filas y columnas
+    df_V = pd.DataFrame(V_transposed, index=filas, columns=columnas)
+
+    # También guardamos una matriz de vy constante
     vy_vals = np.full((ny, nx), v_y)
-    df_vy = pd.DataFrame(vy_vals)
-    
+    df_vy = pd.DataFrame(vy_vals, index=filas, columns=columnas)
+
     # Guardar en Excel
     with pd.ExcelWriter("flujo_resultados.xlsx") as writer:
-        df_V.to_excel(writer, sheet_name="Velocidad_x", index=False)
-        df_vy.to_excel(writer, sheet_name="Velocidad_y", index=False)
-    
+        df_V.to_excel(writer, sheet_name="Velocidad_x")  # index=True por defecto
+        df_vy.to_excel(writer, sheet_name="Velocidad_y")
+
     print("Matrices guardadas en 'flujo_resultados.xlsx'")
+
 
 # Guardar en Excel
 save_to_excel(V)
@@ -151,11 +156,11 @@ save_to_excel(V)
 plt.figure(figsize=(15, 5))
 plt.imshow(V.T, cmap=cm.hot, origin='lower', aspect='auto', interpolation='bilinear')
 plt.colorbar(label='Potencial')
-plt.title(f'Mapa de Calor de velocidad (v_x = {v_x}, v_y = {v_y})')
+plt.title(f'Mapa de Calor (v_x = {v_x}, v_y = {v_y})')
 plt.xlabel('Dirección X')
 plt.ylabel('Dirección Y')
-plt.savefig('mapa_calor_potencial.png', dpi=300, bbox_inches='tight')
-print("Mapa de calor guardado como 'mapa_calor_potencial.png'")
+plt.savefig('mapa_calor.png', dpi=300, bbox_inches='tight')
+print("Mapa de calor guardado como 'mapa_calor.png'")
 plt.show()
 
 # VERIFICACIÓN DE SIMETRIÍA DEL JACOBIANO
