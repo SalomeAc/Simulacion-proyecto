@@ -3,7 +3,10 @@ from scipy.sparse import lil_matrix
 from Jacobi import jacobi_solver
 from GaussSeidel import gauss_seidel_solver
 from Richardson import richardson_solver
-from NewtonRaphson import compute_F, Jacobiano
+from NewtonRaphson import compute_F, Jacobiano, V
+from scipy.interpolate import RectBivariateSpline
+import matplotlib.pyplot as plt
+from matplotlib import cm
 
 # Parámetros
 nx, ny = 200, 20
@@ -45,3 +48,28 @@ for nombre, metodo in metodos_lineales.items():
 
     else:
         print("No convergió dentro del máximo de iteraciones")
+
+# Mapa de calor final
+nx, ny = V.shape
+x = np.arange(nx)
+y = np.arange(ny)
+
+# Crear el spline con base en los datos originales
+spline_interp = RectBivariateSpline(y, x, V.T, kx=3, ky=3)
+
+# Redimensionar a una malla más fina para suavizar visualmente
+x_fino = np.linspace(0, nx - 1, 400)
+y_fino = np.linspace(0, ny - 1, 200)
+
+# Evaluar el spline en la malla fina
+V_fino = spline_interp(y_fino, x_fino).T
+
+# Graficar el mapa de calor suavizado
+plt.figure(figsize=(15, 5))
+plt.imshow(V_fino.T, cmap=cm.hot, origin='lower', aspect='auto')
+plt.colorbar(label='Velocidad')
+plt.title(f'Mapa de Calor (v_x = {v_x}, v_y = {v_y})')
+plt.xlabel('Dirección X')
+plt.ylabel('Dirección Y')
+plt.savefig('mapa_calor_suavizado.png', dpi=300, bbox_inches='tight')
+plt.show()

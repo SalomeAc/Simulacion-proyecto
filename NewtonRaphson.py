@@ -152,16 +152,16 @@ def save_to_excel(V):
 # Guardar en Excel
 save_to_excel(V)
 
-# Mapa de calor
+""" # Mapa de calor
 plt.figure(figsize=(15, 5))
-plt.imshow(V.T, cmap=cm.hot, origin='lower', aspect='auto', interpolation='bilinear')
+plt.imshow(V.T, cmap=cm.hot, origin='lower', aspect='auto')
 plt.colorbar(label='Potencial')
 plt.title(f'Mapa de Calor (v_x = {v_x}, v_y = {v_y})')
 plt.xlabel('Dirección X')
 plt.ylabel('Dirección Y')
 plt.savefig('mapa_calor.png', dpi=300, bbox_inches='tight')
 print("Mapa de calor guardado como 'mapa_calor.png'")
-plt.show()
+plt.show() """
 
 # VERIFICACIÓN DE SIMETRIÍA DEL JACOBIANO
 
