@@ -5,14 +5,7 @@ import scipy.sparse as sp
 import pandas as pd
 
 def richardson_solver(A, b, x0=None, max_iter=10000, tol=1e-6):
-    """
-    Iteración fija x_{k+1} = (I - A)x_k + b  (Richardson con ω = 1).
 
-    Devuelve
-    --------
-    x : ndarray        --  Solución aproximada.
-    k : int            --  Número de iteraciones realizadas.
-    """
     if sp.issparse(A):
         A = A.tocsr()
 
