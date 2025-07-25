@@ -4,7 +4,7 @@ from Jacobi import jacobi_solver
 from GaussSeidel import gauss_seidel_solver
 from Richardson import richardson_solver
 from NewtonRaphson import compute_F, Jacobiano, V
-from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
@@ -57,22 +57,28 @@ nx, ny = V.shape
 x = np.arange(nx)
 y = np.arange(ny)
 
-# Crear el spline con base en los datos originales
-spline_interp = RectBivariateSpline(y, x, V_final.T, kx=3, ky=3)
-
-# Redimensionar a una malla más fina para suavizar visualmente
+# Crear una malla más fina para interpolar
 x_fino = np.linspace(0, nx - 1, 400)
 y_fino = np.linspace(0, ny - 1, 200)
 
-# Evaluar el spline en la malla fina
-V_fino = spline_interp(y_fino, x_fino).T
+# Interpolación cúbica natural por filas (eje X)
+V_interpolado_x = np.zeros((len(x_fino), ny))
+for j in range(ny):
+    cs_x = CubicSpline(x, V[:, j], bc_type='natural')
+    V_interpolado_x[:, j] = cs_x(x_fino)
 
-# Graficar el mapa de calor suavizado
+# Interpolación cúbica natural por columnas (eje Y)
+V_fino = np.zeros((len(x_fino), len(y_fino)))
+for i in range(len(x_fino)):
+    cs_y = CubicSpline(y, V_interpolado_x[i, :], bc_type='natural')
+    V_fino[i, :] = cs_y(y_fino)
+
+# Graficar el mapa de calor suavizado con spline cúbico natural
 plt.figure(figsize=(15, 5))
 plt.imshow(V_fino.T, cmap=cm.hot, origin='lower', aspect='auto')
 plt.colorbar(label='Velocidad')
-plt.title(f'Mapa de Calor con Splines (v_x = {v_x}, v_y = {v_y})')
+plt.title('Mapa de Calor (Spline Cúbico Natural)')
 plt.xlabel('Dirección X')
 plt.ylabel('Dirección Y')
-plt.savefig('mapa_calor_splines.png', dpi=300, bbox_inches='tight')
+plt.savefig('mapa_calor_spline_natural.png', dpi=300, bbox_inches='tight')
 plt.show()
