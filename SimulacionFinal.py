@@ -53,32 +53,34 @@ for nombre, metodo in metodos_lineales.items():
         print("No convergió dentro del máximo de iteraciones")
 
 # Mapa de calor final
-nx, ny = V.shape
-x = np.arange(nx)
-y = np.arange(ny)
+if V_final is not None:
+    x = np.arange(nx)
+    y = np.arange(ny)
 
-# Crear una malla más fina para interpolar
-x_fino = np.linspace(0, nx - 1, 400)
-y_fino = np.linspace(0, ny - 1, 200)
+    # Crear una malla más fina para interpolar
+    x_fino = np.linspace(0, nx - 1, 400)
+    y_fino = np.linspace(0, ny - 1, 200)
 
-# Interpolación cúbica natural por filas (eje X)
-V_interpolado_x = np.zeros((len(x_fino), ny))
-for j in range(ny):
-    cs_x = CubicSpline(x, V[:, j], bc_type='natural')
-    V_interpolado_x[:, j] = cs_x(x_fino)
+    # Interpolación cúbica natural por filas (eje X)
+    V_interpolado_x = np.zeros((len(x_fino), ny))
+    for j in range(ny):
+        cs_x = CubicSpline(x, V_final[:, j], bc_type='natural')
+        V_interpolado_x[:, j] = cs_x(x_fino)
 
-# Interpolación cúbica natural por columnas (eje Y)
-V_fino = np.zeros((len(x_fino), len(y_fino)))
-for i in range(len(x_fino)):
-    cs_y = CubicSpline(y, V_interpolado_x[i, :], bc_type='natural')
-    V_fino[i, :] = cs_y(y_fino)
+    # Interpolación cúbica natural por columnas (eje Y)
+    V_fino = np.zeros((len(x_fino), len(y_fino)))
+    for i in range(len(x_fino)):
+        cs_y = CubicSpline(y, V_interpolado_x[i, :], bc_type='natural')
+        V_fino[i, :] = cs_y(y_fino)
 
-# Graficar el mapa de calor suavizado con spline cúbico natural
-plt.figure(figsize=(15, 5))
-plt.imshow(V_fino.T, cmap=cm.hot, origin='lower', aspect='auto')
-plt.colorbar(label='Velocidad')
-plt.title('Mapa de Calor (Spline Cúbico Natural)')
-plt.xlabel('Dirección X')
-plt.ylabel('Dirección Y')
-plt.savefig('mapa_calor_spline_natural.png', dpi=300, bbox_inches='tight')
-plt.show()
+    # Graficar el mapa de calor suavizado con spline cúbico natural
+    plt.figure(figsize=(15, 5))
+    plt.imshow(V_fino.T, cmap=cm.hot, origin='lower', aspect='auto')
+    plt.colorbar(label='Velocidad')
+    plt.title(f'Mapa de Calor (Spline Cúbico Natural) (v_x = {v_x}, v_y = {v_y})')
+    plt.xlabel('Dirección X')
+    plt.ylabel('Dirección Y')
+    plt.savefig('mapa_calor_spline_natural.png', dpi=300, bbox_inches='tight')
+    plt.show()
+else:
+    print("No se generó V_final. Asegúrate de que Gauss-Seidel fue ejecutado correctamente.")
